@@ -1,8 +1,9 @@
 const SPREADSHEET_ID="1fIwjxQdN64AH2TS362EHL_G3-QCcjMtqj8c2-lC4QQM";
-const RESULT_SHEET="QuizResults",CONFIG_SHEET="QuizConfig",QUESTION_SHEET="QuizQuestions",PROFILE_SHEET="Profiles",FINANCE_SHEET="FinanceTransactions";
+const RESULT_SHEET="QuizResults",CONFIG_SHEET="QuizConfig",QUESTION_SHEET="QuizQuestions",PROFILE_SHEET="Profiles",FINANCE_SHEET="FinanceTransactions",PROFILE_SESSION_SHEET="ProfileSessions";
 const HEADERS=["Timestamp","Week","Name","Phone","Community","Score","DurationSeconds","Answers","Consent","Status"];
 const PROFILE_HEADERS=["ProfileId","CreatedAt","UpdatedAt","Name","Phone","Community","PinSalt","PinHash","Status"];
 const FINANCE_HEADERS=["TransactionId","ProfileId","CreatedAt","Date","Type","Amount","Category","Note","DeletedAt"];
+const PROFILE_SESSION_HEADERS=["TokenHash","ProfileId","CreatedAt","ExpiresAt","RevokedAt"];
 const FINANCE_CATEGORIES=["Belanja dapur","Tagihan","Transportasi","Pendidikan","Kesehatan","Usaha","Gaji/Pendapatan","Lainnya"];
 const ADMIN_USERNAME="ratufinansial";
 const ADMIN_PASSWORD_SHA256="799349982629b0e5843f8632b062042dc75d479df94b7d59e6d49856eb24f51e";
@@ -135,6 +136,7 @@ function configSheet_(){const file=book_();let sheet=file.getSheetByName(CONFIG_
 function questionSheet_(){const file=book_();let sheet=file.getSheetByName(QUESTION_SHEET);if(!sheet){sheet=file.insertSheet(QUESTION_SHEET);sheet.getRange(1,1,1,6).setValues([["Order","Question","AnswerA","AnswerB","AnswerC","CorrectIndex"]]);sheet.getRange(2,1,DEFAULT_QUESTIONS.length,6).setValues(DEFAULT_QUESTIONS.map((q,i)=>[i+1,...q]));sheet.setFrozenRows(1);}return sheet;}
 function profileSheet_(){const file=book_();let sheet=file.getSheetByName(PROFILE_SHEET);if(!sheet){sheet=file.insertSheet(PROFILE_SHEET);sheet.appendRow(PROFILE_HEADERS);sheet.setFrozenRows(1);}return sheet;}
 function financeSheet_(){const file=book_();let sheet=file.getSheetByName(FINANCE_SHEET);if(!sheet){sheet=file.insertSheet(FINANCE_SHEET);sheet.appendRow(FINANCE_HEADERS);sheet.setFrozenRows(1);}return sheet;}
+function profileSessionSheet_(){const file=book_();let sheet=file.getSheetByName(PROFILE_SESSION_SHEET);if(!sheet){sheet=file.insertSheet(PROFILE_SESSION_SHEET);sheet.appendRow(PROFILE_SESSION_HEADERS);sheet.setFrozenRows(1);sheet.hideSheet();}return sheet;}
 
 function upsertQuizProfile_(name,phone,community,pin){
   const sheet=profileSheet_(),rows=sheet.getDataRange().getValues(),found=findProfileByPhone_(phone,rows);
@@ -153,9 +155,9 @@ function profileLogin_(b){
   return json_({ok:true,profileToken:token,profile:{name:found.name,phone:found.phone,community:found.community}});
 }
 function profileMe_(b){const profile=requireProfile_(b.profileToken);return json_({ok:true,profile:{name:profile.name,phone:profile.phone,community:profile.community}});}
-function profileLogout_(b){CacheService.getScriptCache().remove("profile-session-"+sha256_(String(b.profileToken||"")));return json_({ok:true});}
-function createProfileSession_(profileId){const token=Utilities.getUuid()+Utilities.getUuid();CacheService.getScriptCache().put("profile-session-"+sha256_(token),profileId,21600);return token;}
-function requireProfile_(token){if(!token)throw new Error("Sesi profil tidak valid");const id=CacheService.getScriptCache().get("profile-session-"+sha256_(String(token)));if(!id)throw new Error("Sesi profil tidak valid");const found=findProfileById_(id);if(!found||found.status!=="ACTIVE")throw new Error("Profil tidak aktif");return found;}
+function profileLogout_(b){const hash=sha256_(String(b.profileToken||"")),sheet=profileSessionSheet_(),rows=sheet.getDataRange().getValues();CacheService.getScriptCache().remove("profile-session-"+hash);for(let i=1;i<rows.length;i++)if(String(rows[i][0])===hash&&!rows[i][4])sheet.getRange(i+1,5).setValue(new Date());SpreadsheetApp.flush();return json_({ok:true});}
+function createProfileSession_(profileId){const token=Utilities.getUuid()+Utilities.getUuid(),hash=sha256_(token),expires=new Date(Date.now()+21600000);profileSessionSheet_().appendRow([hash,profileId,new Date(),expires,""]);SpreadsheetApp.flush();CacheService.getScriptCache().put("profile-session-"+hash,profileId,21600);return token;}
+function requireProfile_(token){if(!token)throw new Error("Sesi profil tidak valid");const hash=sha256_(String(token)),cache=CacheService.getScriptCache();let id=cache.get("profile-session-"+hash);if(!id){const rows=profileSessionSheet_().getDataRange().getValues();for(let i=rows.length-1;i>=1;i--)if(String(rows[i][0])===hash&&!rows[i][4]&&new Date(rows[i][3]).getTime()>Date.now()){id=String(rows[i][1]);cache.put("profile-session-"+hash,id,Math.min(21600,Math.max(1,Math.floor((new Date(rows[i][3]).getTime()-Date.now())/1000))));break}}if(!id)throw new Error("Sesi profil tidak valid");const found=findProfileById_(id);if(!found||found.status!=="ACTIVE")throw new Error("Profil tidak aktif");return found;}
 function findProfileByPhone_(phone,rows){return findProfile_(rows||profileSheet_().getDataRange().getValues(),r=>normaliseStoredPhone_(r[4])===phone);}
 function findProfileById_(id){return findProfile_(profileSheet_().getDataRange().getValues(),r=>String(r[0])===String(id));}
 function findProfile_(rows,test){for(let i=1;i<rows.length;i++)if(test(rows[i]))return profileFromRow_(rows[i],i+1);return null;}
@@ -181,7 +183,8 @@ function financeDelete_(b){
   for(let i=1;i<rows.length;i++)if(String(rows[i][0])===id&&String(rows[i][1])===profile.id&&!rows[i][8]){sheet.getRange(i+1,9).setValue(new Date());return json_({ok:true});}
   throw new Error("Catatan tidak ditemukan");
 }
-function financeRow_(r){return{id:String(r[0]),createdAt:new Date(r[2]).toISOString(),date:String(r[3]),type:String(r[4]),amount:Number(r[5])||0,category:String(r[6]).replace(/^'/,""),note:String(r[7]).replace(/^'/,"")};}
+function financeRow_(r){return{id:String(r[0]),createdAt:new Date(r[2]).toISOString(),date:financeDate_(r[3]),type:String(r[4]),amount:Number(r[5])||0,category:String(r[6]).replace(/^'/,""),note:String(r[7]).replace(/^'/,"")};}
+function financeDate_(value){if(Object.prototype.toString.call(value)==="[object Date]"&&Number.isFinite(value.getTime()))return Utilities.formatDate(value,Session.getScriptTimeZone()||"Asia/Jakarta","yyyy-MM-dd");const text=String(value||"").trim();if(/^\d{4}-\d{2}-\d{2}$/.test(text))return text;const parsed=new Date(text);return Number.isFinite(parsed.getTime())?Utilities.formatDate(parsed,Session.getScriptTimeZone()||"Asia/Jakarta","yyyy-MM-dd"):text;}
 function phone_(v){const phone=normaliseStoredPhone_(v);if(phone.length<10||phone.length>15)throw new Error("Nomor WhatsApp tidak valid");return phone;}
 function normaliseStoredPhone_(v){let p=String(v||"").replace(/\D/g,"");if(p.startsWith("0"))p="62"+p.slice(1);return p;}
 function safeText_(v,max){let s=String(v||"").replace(/[<>\u0000-\u001F]/g,"").trim().slice(0,max||80);if(/^[=+\-@]/.test(s))s="'"+s;return s;}
