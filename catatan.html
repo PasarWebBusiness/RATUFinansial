@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b4f93">
+  <meta name="description" content="Catat pemasukan dan pengeluaran keluarga serta lihat ringkasan keuangan otomatis bersama RATU Finansial.">
+  <meta name="robots" content="index,follow">
+  <title>Catatan Keuangan Keluarga | RATU Finansial</title>
+  <link rel="icon" type="image/png" href="assets/mascot/ratu.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="catatan.css">
+  <script src="theme.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html"><img src="assets/mascot/ratu.png" alt="Maskot RATU"><span><strong>RATU</strong><small>Catatan Keuangan</small></span></a>
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Gunakan mode gelap">🌙</button>
+    <a class="top-cta" id="header-action" href="index.html#kuis">Ikut Kuis</a>
+  </header>
+
+  <main class="finance-main">
+    <section id="profile-gate" class="profile-gate">
+      <article class="profile-card">
+        <img src="assets/mascot/ratu.png" alt="Maskot RATU">
+        <span class="kicker">Catatan Pribadi Ibu</span>
+        <h1>Masuk dengan profil kuis</h1>
+        <p>Gunakan nomor WhatsApp dan PIN 6 digit yang Ibu buat saat mengikuti kuis.</p>
+        <form id="profile-login-form">
+          <label>Nomor WhatsApp<input name="phone" inputmode="tel" autocomplete="tel" required pattern="[0-9+ -]{9,18}" placeholder="Contoh: 081234567890"></label>
+          <label>PIN 6 digit<input name="pin" type="password" inputmode="numeric" autocomplete="current-password" required pattern="[0-9]{6}" maxlength="6" placeholder="••••••"></label>
+          <button class="button primary full" type="submit">Masuk ke Catatan</button>
+          <p id="profile-error" class="profile-message" role="alert"></p>
+        </form>
+        <div class="profile-help"><b>Belum punya PIN?</b><span>Ikuti kuis terlebih dahulu. Profil dan PIN dibuat saat kuis pertama.</span><a href="index.html#kuis">Buka kuis →</a></div>
+      </article>
+    </section>
+
+    <div id="finance-app" hidden>
+      <section class="profile-strip"><div><span>Catatan milik</span><strong id="profile-name">Ibu RATU</strong><small id="profile-phone"></small></div><button id="profile-logout" class="button ghost compact" type="button">Keluar</button></section>
+      <section class="finance-hero"><div><span class="pill">Dompet Keluarga</span><h1>Uang lebih mudah dipahami saat rutin dicatat.</h1><p>Catat pemasukan dan belanja harian. RATU akan merangkum kondisi keuangan Ibu secara otomatis.</p><div class="privacy-note">🔒 Tersimpan aman pada profil Ibu.</div></div><img src="assets/mascot/ratu.png" alt="Maskot RATU membantu mencatat keuangan"></section>
+      <section class="summary-grid" aria-label="Ringkasan keuangan"><article class="summary-card income"><span>Pemasukan</span><strong id="total-income">Rp0</strong><small>Bulan ini</small></article><article class="summary-card expense"><span>Pengeluaran</span><strong id="total-expense">Rp0</strong><small>Bulan ini</small></article><article class="summary-card balance"><span>Sisa uang</span><strong id="total-balance">Rp0</strong><small id="balance-label">Tetap semangat, Bu</small></article></section>
+      <section class="finance-grid">
+        <article id="form-catatan" class="finance-panel entry-panel"><span class="kicker">Catatan Baru</span><h2>Hari ini ada transaksi apa?</h2><form id="finance-form"><div class="type-switch"><label><input type="radio" name="type" value="expense" checked><span>Pengeluaran</span></label><label><input type="radio" name="type" value="income"><span>Pemasukan</span></label></div><label>Jumlah uang<div class="money-input"><span>Rp</span><input name="amount" type="text" inputmode="numeric" autocomplete="off" maxlength="17" required placeholder="100.000" aria-describedby="amount-help"></div><small id="amount-help" class="field-help">Ketik angka saja, contoh 100000.</small></label><div class="field-pair"><label>Kategori<select name="category" required><option value="Belanja dapur">Belanja dapur</option><option value="Tagihan">Tagihan</option><option value="Transportasi">Transportasi</option><option value="Pendidikan">Pendidikan</option><option value="Kesehatan">Kesehatan</option><option value="Usaha">Usaha</option><option value="Gaji/Pendapatan">Gaji/Pendapatan</option><option value="Lainnya">Lainnya</option></select></label><label>Tanggal<input name="date" type="date" required></label></div><label>Catatan singkat<input name="note" maxlength="80" placeholder="Contoh: belanja sayur mingguan"></label><button class="button primary full" type="submit">Simpan catatan</button><p id="finance-message" class="profile-message" role="status"></p></form></article>
+        <article class="finance-panel insight-panel"><span class="kicker">Ringkasan Otomatis</span><h2>Gambaran bulan ini</h2><div class="saving-meter"><div><span>Persentase uang tersisa</span><strong id="saving-rate">0%</strong></div><progress id="saving-progress" max="100" value="0"></progress></div><div id="financial-insight" class="insight-box"><span>💙</span><p>Tambahkan catatan pertama untuk melihat ringkasan keuangan Ibu.</p></div><div class="top-category"><span>Pengeluaran terbesar</span><strong id="top-category">Belum ada</strong></div></article>
+      </section>
+      <section class="finance-panel history-panel"><div class="history-head"><div><span class="kicker">Riwayat</span><h2>Catatan terbaru</h2></div><input id="month-filter" type="month" aria-label="Pilih bulan"></div><div id="finance-history" class="finance-history"></div></section>
+    </div>
+  </main>
+
+  <footer><div class="partner-title">Didukung dan dijalankan bersama</div><div class="footer-logos"><span class="logo-box"><img src="assets/logos/action.png" alt="ACTION"></span><span class="logo-box"><img src="assets/logos/asuransi-astra.png" alt="Asuransi Astra"></span><span class="logo-box"><img src="assets/logos/70th-astra.png" alt="70 tahun Asuransi Astra"></span></div><p class="copyright">Copyright © 2026 RATU Finansial. Created by <a href="https://pasarweb.vercel.app" target="_blank" rel="noopener noreferrer">Pasar Web Business</a></p></footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="navigation.js"></script><script src="catatan.js"></script>
+</body>
+</html>
