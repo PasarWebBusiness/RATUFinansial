@@ -32,3 +32,17 @@ html,body{width:100%;max-width:100%;overflow-x:clip!important;overscroll-behavio
   .topbar>*{min-width:0}
   .transaction-row{grid-template-columns:36px minmax(0,1fr) 32px}
 }
+
+/* Keep visually hidden transaction-type radios inside their own labels. */
+.type-switch label{position:relative}
+.type-switch input{
+  position:absolute;
+  width:1px!important;
+  height:1px;
+  min-height:0!important;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  clip-path:inset(50%);
+  opacity:0;
+}
