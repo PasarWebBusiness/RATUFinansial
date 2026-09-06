@@ -9,3 +9,26 @@
 @media(max-width:520px){.profile-card{padding:24px 20px;border-radius:23px}.profile-card>img{width:92px}.profile-strip{align-items:flex-start;flex-wrap:wrap}.profile-strip div{flex:1 1 160px}.profile-strip .button{flex:0 1 auto;min-height:40px;padding:7px 11px}.finance-hero{padding-inline:18px}.finance-panel{padding-inline:16px}.summary-card{padding-inline:18px}.topbar .brand span{display:none}.topbar .brand img{width:42px;height:42px}.topbar .top-cta{max-width:42vw;margin-left:0;padding-inline:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.transaction-row{grid-template-columns:36px minmax(0,1fr) 32px;gap:9px;padding:11px}.transaction-icon{width:36px;height:36px}.transaction-row>strong{max-width:100%;font-size:.82rem}}
 
 @media(max-width:360px){.finance-main{width:calc(100% - 16px)}.finance-hero{padding-inline:15px}.finance-panel{padding-inline:13px}.type-switch{gap:6px}.type-switch span{padding-inline:5px;font-size:.82rem}.topbar{padding-inline:10px}.topbar .top-cta{font-size:.75rem}}
+
+/* The signed-in wallet must never create a page-wide horizontal scroll area. */
+html,body{width:100%;max-width:100%;overflow-x:clip!important;overscroll-behavior-x:none}
+#finance-app,.finance-main,.finance-grid,.summary-grid,.finance-panel,.history-panel,.finance-history{width:100%;min-width:0;max-width:100%}
+#finance-app{overflow-x:clip}
+#finance-app *{min-width:0}
+.finance-hero,.finance-panel,.summary-card,.profile-strip,.transaction-row{overflow-x:hidden}
+.finance-panel form,.finance-panel label,.type-switch,.field-pair,.money-input{width:100%;max-width:100%}
+.money-input input{appearance:none;-webkit-appearance:none}
+.transaction-row{grid-template-columns:44px minmax(0,1fr) minmax(0,max-content) 38px}
+.transaction-row>strong{white-space:normal;text-align:right}
+
+@media(max-width:760px){
+  .finance-main{width:calc(100% - 22px)}
+  .transaction-row{grid-template-columns:40px minmax(0,1fr) 32px}
+  .transaction-row>strong{grid-column:2;justify-self:start;text-align:left}
+}
+
+@media(max-width:520px){
+  .topbar{width:100%;max-width:100%;overflow:hidden}
+  .topbar>*{min-width:0}
+  .transaction-row{grid-template-columns:36px minmax(0,1fr) 32px}
+}
